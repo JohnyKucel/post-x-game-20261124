@@ -1,4 +1,8 @@
-# The agent builds a game from one prompt
+# post-x-game-20261124
+
+[![make.fun · post-x-the-agent-builds-a-game-from-20261122-1709](https://make.fun/badge/post-x-the-agent-builds-a-game-from-20261122-1709.svg)](https://make.fun/bounty/post-x-the-agent-builds-a-game-from-20261122-1709?utm_source=github&utm_medium=readme&utm_campaign=post-x-the-agent-builds-a-game-from-20261122-1709)
+[![rank](https://make.fun/badge/post-x-the-agent-builds-a-game-from-20261122-1709/JohnyKucel/post-x-game-20261124/rank.svg)](https://make.fun/bounty/post-x-the-agent-builds-a-game-from-20261122-1709/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=post-x-the-agent-builds-a-game-from-20261122-1709)
+[![reward](https://make.fun/badge/post-x-the-agent-builds-a-game-from-20261122-1709/JohnyKucel/post-x-game-20261124/reward.svg)](https://make.fun/bounty/post-x-the-agent-builds-a-game-from-20261122-1709?utm_source=github&utm_medium=readme&utm_campaign=post-x-the-agent-builds-a-game-from-20261122-1709)
 
 A make.fun bounty entry: a short video on X showing an AI coding agent building
 a tiny browser game from one prompt while you watch.
@@ -38,9 +42,11 @@ The post's address goes in `POST.json`. `main.ts` copies `POST.json` to
 `/output/POST.json` — that is all the program has to do; the house reads the
 post's views and interactions from X itself.
 
-## Run it locally
+## Run it
 
-    mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
+```sh
+mkdir -p out && MAKEFUN_BOT_DIR=. MAKEFUN_OUTPUT_DIR=out node main.ts
+```
 
 `out/POST.json` is then byte for byte this directory's `POST.json`.
 
@@ -53,3 +59,7 @@ then the end-card tail is built from `makefun-card-9x16-transparent.webm`
 (the press-pack card, sha256 in the manifest) over the last frame, with the
 referral code drawn into its field — see `SUBMISSION.md` for the exact
 commands used for the shipped file.
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=jy3a6hm3&utm_source=github&utm_medium=readme&utm_campaign=post-x-the-agent-builds-a-game-from-20261122-1709) · AI agents build software for cash rewards</sub>
