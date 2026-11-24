@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Star Catch — built from one prompt</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #0b0b1e; height: 100%; overflow: hidden; }
+  body { display: flex; align-items: center; justify-content: center; font-family: system-ui, sans-serif; }
+  #wrap { position: relative; width: min(100vw, 56.25vh); aspect-ratio: 9 / 16; }
+  canvas { width: 100%; height: 100%; display: block; background: #0b0b1e; border-radius: 12px; }
+  #hint { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center;
+    color: #9d9dc4; font-size: 13px; pointer-events: none; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="540" height="960"></canvas>
+  <div id="hint">Move: mouse / touch / arrow keys &mdash; catch the stars, dodge the rocks</div>
+</div>
+<script>
+(function () {
+  var cv = document.getElementById('game');
+  var ctx = cv.getContext('2d');
+  var W = 540, H = 960;
+  var paddle = { x: W / 2, w: 110, h: 18, y: H - 70 };
+  var stars = [], rocks = [], parts = [];
+  var score = 0, lives = 3, timeLeft = 60, over = false, started = false;
+  var spawnT = 0, last = performance.now();
+
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function spawnStar() {
+    stars.push({ x: rnd(30, W - 30), y: -20, vy: rnd(150, 260), r: rnd(12, 18), rot: rnd(0, 6.28), vr: rnd(-2, 2) });
+  }
+  function spawnRock() {
+    rocks.push({ x: rnd(30, W - 30), y: -20, vy: rnd(200, 320), r: rnd(14, 20), rot: rnd(0, 6.28), vr: rnd(-3, 3) });
+  }
+  function burst(x, y, color) {
+    for (var i = 0; i < 14; i++) {
+      var a = rnd(0, 6.28), sp = rnd(60, 240);
+      parts.push({ x: x, y: y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.5, color: color });
+    }
+  }
+  function starPath(r) {
+    ctx.beginPath();
+    for (var i = 0; i < 10; i++) {
+      var ang = -Math.PI / 2 + i * Math.PI / 5;
+      var rad = i % 2 === 0 ? r : r * 0.45;
+      var x = Math.cos(ang) * rad, y = Math.sin(ang) * rad;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+  function drawStar(s) {
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    ctx.rotate(s.rot);
+    ctx.fillStyle = '#ffd94d';
+    ctx.shadowColor = '#ffd94d';
+    ctx.shadowBlur = 18;
+    starPath(s.r);
+    ctx.fill();
+    ctx.restore();
+  }
+  function drawRock(rk) {
+    ctx.save();
+    ctx.translate(rk.x, rk.y);
+    ctx.rotate(rk.rot);
+    ctx.fillStyle = '#8a8fa8';
+    ctx.beginPath();
+    ctx.moveTo(-rk.r, -rk.r * 0.4);
+    ctx.lineTo(-rk.r * 0.3, -rk.r);
+    ctx.lineTo(rk.r, -rk.r * 0.5);
+    ctx.lineTo(rk.r * 0.7, rk.r * 0.7);
+    ctx.lineTo(-rk.r * 0.6, rk.r * 0.8);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  function step(now) {
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (!over && started) {
+      timeLeft -= dt;
+      if (timeLeft <= 0) { timeLeft = 0; over = true; }
+      spawnT -= dt;
+      if (spawnT <= 0) {
+        spawnStar();
+        if (Math.random() < 0.35) spawnRock();
+        spawnT = rnd(0.35, 0.7);
+      }
+      stars.forEach(function (s) { s.y += s.vy * dt; s.rot += s.vr * dt; });
+      rocks.forEach(function (r) { r.y += r.vy * dt; r.rot += r.vr * dt; });
+      stars = stars.filter(function (s) {
+        if (s.y - s.r > H) return false;
+        if (s.y + s.r > paddle.y && s.y - s.r < paddle.y + paddle.h &&
+            s.x > paddle.x - paddle.w / 2 && s.x < paddle.x + paddle.w / 2) {
+          score += 1;
+          burst(s.x, paddle.y, '#ffd94d');
+          return false;
+        }
+        return true;
+      });
+      rocks = rocks.filter(function (r) {
+        if (r.y - r.r > H) return false;
+        if (r.y + r.r > paddle.y && r.y - r.r < paddle.y + paddle.h &&
+            r.x > paddle.x - paddle.w / 2 && r.x < paddle.x + paddle.w / 2) {
+          lives -= 1;
+          burst(r.x, paddle.y, '#ff5d5d');
+          if (lives <= 0) over = true;
+          return false;
+        }
+        return true;
+      });
+    }
+    parts.forEach(function (p) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+    parts = parts.filter(function (p) { return p.life > 0; });
+    draw();
+    requestAnimationFrame(step);
+  }
+  function draw() {
+    ctx.fillStyle = '#0b0b1e';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#ffffff';
+    for (var i = 0; i < 60; i++) {
+      var sx = (i * 97) % W, sy = (i * 173) % H;
+      ctx.globalAlpha = 0.25 + ((i * 37) % 10) / 20;
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+    ctx.globalAlpha = 1;
+    stars.forEach(drawStar);
+    rocks.forEach(drawRock);
+    parts.forEach(function (p) {
+      ctx.globalAlpha = Math.max(0, p.life * 2);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+    });
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#7c5cff';
+    ctx.shadowColor = '#7c5cff';
+    ctx.shadowBlur = 16;
+    ctx.beginPath();
+    ctx.roundRect(paddle.x - paddle.w / 2, paddle.y, paddle.w, paddle.h, 9);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 34px system-ui, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('SCORE ' + score, 20, 48);
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.ceil(timeLeft) + 's', W - 20, 48);
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#ff5d5d';
+    ctx.font = 'bold 26px system-ui, sans-serif';
+    ctx.fillText('♥'.repeat(Math.max(0, lives)), 20, 86);
+    if (!started) {
+      ctx.fillStyle = 'rgba(11,11,30,0.72)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#ffd94d';
+      ctx.font = 'bold 54px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('STAR CATCH', W / 2, H / 2 - 60);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '28px system-ui, sans-serif';
+      ctx.fillText('Catch the stars. Dodge the rocks.', W / 2, H / 2);
+      ctx.fillText('60 seconds. How many can you catch?', W / 2, H / 2 + 42);
+      ctx.fillStyle = '#7c5cff';
+      ctx.font = 'bold 30px system-ui, sans-serif';
+      ctx.fillText('Tap / click to start', W / 2, H / 2 + 120);
+    }
+    if (over) {
+      ctx.fillStyle = 'rgba(11,11,30,0.78)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#ffd94d';
+      ctx.font = 'bold 54px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('TIME UP!', W / 2, H / 2 - 40);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 40px system-ui, sans-serif';
+      ctx.fillText('You caught ' + score + ' stars', W / 2, H / 2 + 30);
+      ctx.fillStyle = '#9d9dc4';
+      ctx.font = '26px system-ui, sans-serif';
+      ctx.fillText('Refresh to play again', W / 2, H / 2 + 90);
+    }
+  }
+  function moveTo(clientX) {
+    var rect = cv.getBoundingClientRect();
+    paddle.x = (clientX - rect.left) / rect.width * W;
+    paddle.x = Math.max(paddle.w / 2, Math.min(W - paddle.w / 2, paddle.x));
+  }
+  cv.addEventListener('pointermove', function (e) { moveTo(e.clientX); });
+  cv.addEventListener('pointerdown', function (e) {
+    if (!started) started = true;
+    moveTo(e.clientX);
+  });
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowLeft') paddle.x = Math.max(paddle.w / 2, paddle.x - 28);
+    if (e.key === 'ArrowRight') paddle.x = Math.min(W - paddle.w / 2, paddle.x + 28);
+    if (e.key === ' ' || e.key === 'Enter') started = true;
+  });
+  requestAnimationFrame(step);
+})();
+</script>
+</body>
+</html>
