@@ -2,11 +2,13 @@
 
 ## Status
 
-**NOT SUBMITTED** — builder selesai, menunggu bundle koordinator.
-Alasan: entri ini baru bisa disubmit SETELAH videonya diposting di X dan
-`POST.json` diisi alamat postnya (lihat "Langkah yang tersisa" di bawah).
-Jangan bundle/submit dari commit ini apa adanya: `POST.json` masih placeholder
-dan gate akan menolaknya (valid 0).
+**SUBMITTED 24 Nov 2026 ~13:39 WIB** — submission **01a20c47-dd61-719d-b730-3c4d96da6acd**,
+claim code **AF-WVGJ4-CB7CA-EYVQH-4TXC5**, commit `18809c47b40e60bf1dcb280f89669fa2d0d6517a`,
+terverifikasi via API (status `submitted`, owner @assuszf). Server checks masih
+processing saat submit (stage submitted, grading antre). Perjalanan: submit
+pertama (commit bcc3c59) ditolak 422 karena README belum ada badge make.fun —
+diperbaiki (README + 3 badge live + link bounty), commit 18809c4, submit ulang
+diterima HTTP 202. Fee $0.
 
 ## Kompetisi
 
